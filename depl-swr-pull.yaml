@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: swr-performance-test-pull
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: swr-performance-test-pull
+  template:
+    metadata:
+      labels:
+        app: swr-performance-test-pull
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: /metrics
+        prometheus.io/port: "9102"
+        prometheus.io/scheme: http
+    spec:
+      containers:
+      - name: swr-pull
+        image: swr.eu-de.otc.t-systems.com/container/swr-performance-test:pull6
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          privileged: true
+        command:
+          - /bin/sh
+          - "-c"
+        args:
+          - /exporter.sh
+        env:
+        - name: USER
+          valueFrom:
+            secretKeyRef:
+              name: swr-secret
+              key: username
+        - name: PASS
+          valueFrom:
+            secretKeyRef:
+              name: swr-secret
+              key: password
+        volumeMounts:
+        - name: shared-data
+          mountPath: /shared
+        - name: containerd-sock
+          mountPath: /run/containerd/containerd.sock
+          readOnly: false
+        livenessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - test $(expr $(date +%s) - $(cat /tmp/heartbeat)) -lt 60
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          failureThreshold: 3
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      imagePullSecrets:
+      - name: default-secret
+      volumes:
+      - name: shared-data
+        persistentVolumeClaim:
+          claimName: swr-performance-test-pvc
+      - name: containerd-sock
+        hostPath:
+          path: /run/containerd/containerd.sock
+          type: Socket
