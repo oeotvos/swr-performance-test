@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: swr-performance-test-pvc
+  name: swr-pvc
   namespace: default
   annotations:
     everest.io/obs-volume-type: STANDARD
