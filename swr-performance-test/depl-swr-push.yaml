@@ -25,7 +25,7 @@ spec:
     spec:
       containers:
       - name: swr-push
-        image: swr.eu-de.otc.t-systems.com/container/swr-performance-test:push6
+        image: swr.eu-de.otc.t-systems.com/container/swr-performance-test:push11
         imagePullPolicy: IfNotPresent
         securityContext:
           privileged: true

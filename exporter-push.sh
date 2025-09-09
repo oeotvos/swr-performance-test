@@ -39,14 +39,19 @@ while true; do
     IMAGE_TAG="$IMAGE_NEW:$TAG"
     echo ">>> Building $IMAGE_TAG"
 
-    # Dynamic Dockerfile
+    # Dynamic Dockerfile with new random layers
     echo "FROM $IMAGE_ORIG" > Dockerfile
+    echo "ENV BUILD_ID=${TAG}" >> Dockerfile
     echo "RUN echo $TAG > /random.txt" >> Dockerfile
+    echo "RUN echo $(uuidgen) > /random_uuid.txt" >> Dockerfile
+    echo "RUN dd if=/dev/urandom of=/random.bin bs=10M count=10 && ls -lh /random.bin" >> Dockerfile
 
     buildctl build \
       --frontend dockerfile.v0 \
       --local context=. \
       --local dockerfile=. \
+      --opt build-arg:BUILDKIT_INLINE_CACHE=0 \
+      --no-cache \
       --output type=docker,name=$IMAGE_TAG | ctr -n default images import -
 
     # Measuring the pull

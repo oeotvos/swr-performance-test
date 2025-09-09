@@ -20,14 +20,10 @@ done &
 while true; do
     IMAGE_PULL=$(cat /shared/image_tag.txt)
 
-    # Remove image to force full download
-    ctr -n default images rm "$IMAGE_PULL" >/dev/null 2>&1 || true
-
     # Pull measurement 
     START_PULL=$(date +%s.%N)
     ctr -n default images pull --user "$USER:$PASS" "$IMAGE_PULL"
     END_PULL=$(date +%s.%N)
-
     ELAPSED_PULL=$(echo "$END_PULL - $START_PULL" | bc)
 
     # Write Prometheus metrics
@@ -36,6 +32,14 @@ while true; do
       echo "# TYPE image_pull_duration_seconds gauge"
       echo "image_pull_duration_seconds $ELAPSED_PULL"
     } > "$METRICS_FILE"
+
+    # Remove image to force full download
+    ctr -n default images rm "$IMAGE_PULL" >/dev/null 2>&1 || true
+    ctr -n default content rm $(ctr -n default content ls -q) >/dev/null 2>&1 || true
+    DIGESTS=$(ctr -n default images ls --digests | grep "$IMAGE_PULL" | awk '{print $3}')
+    for d in $DIGESTS; do
+      ctr -n default content rm $d || true
+    done
 
     echo "$(date +%s)" > /tmp/heartbeat
     sleep 10

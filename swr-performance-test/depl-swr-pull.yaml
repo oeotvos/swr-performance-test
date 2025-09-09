@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: swr-pull
-        image: swr.eu-de.otc.t-systems.com/container/swr-performance-test:pull6
+        image: swr.eu-de.otc.t-systems.com/container/swr-performance-test:pull7
         imagePullPolicy: IfNotPresent
         securityContext:
           privileged: true
